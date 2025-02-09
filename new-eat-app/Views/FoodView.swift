@@ -9,8 +9,12 @@ import SwiftData
 import SwiftUI
 
 struct FoodView: View {
+    @State private var trigger: Int = 0
+    @State private var goodJobIsShown: Bool = false
     @Environment(\.scenePhase) private var scenePhase
     @Bindable var viewModel: UserViewModel
+    @AppStorage("finishedOnboarding") private var finishedOnboarding: Bool = true
+    @State var onboardingTomorrow: Bool = false
     
     // MARK: UNDERSTAND LOL
     @AppStorage("currentDay") var currentDay: Int = 1
@@ -64,11 +68,34 @@ struct FoodView: View {
     }
     
     var manyCharacters: some View {
-        LazyVGrid(columns: [GridItem(), GridItem()]) {
-            ForEach($viewModel.user.currentCharacters, id: \.self) { $character in
-                CharacterView(lastDate: $lastDate, character: $character, viewModel: viewModel)
-            }
-        }.padding(.bottom, 10)
+        ZStack (alignment: .top) {
+            LazyVGrid(columns: [GridItem(), GridItem()]) {
+                ForEach($viewModel.user.currentCharacters, id: \.self) { $character in
+                    CharacterView(lastDate: $lastDate, character: $character, viewModel: viewModel)
+                        .onChange(of: character.isShown) { _, newValue in
+                            if !newValue && viewModel.user.currentCharacters.allSatisfy({ !$0.isShown }) {
+                                trigger += 1
+                                goodJobIsShown.toggle()
+                            }
+                            if viewModel.user.currentHabit.totalDays == viewModel.user.currentHabit.completedDays {
+                                onboardingTomorrow = true
+                            }
+                        }
+                        
+                }
+            }.padding(.bottom, 10)
+            Text("Great \n job!")
+                .font(.megaTitle)
+                .foregroundStyle(.blue)
+                .multilineTextAlignment(.center)
+                .lineSpacing(-10) // MARK: doesn't work lol
+                .opacity(goodJobIsShown ? 1 : 0)
+                .scaleEffect(goodJobIsShown ? 1.5 : 1) // Scale up the text
+                .padding()
+                .animation(goodJobIsShown ? .spring : nil, value: goodJobIsShown) // Animate opacity and scale
+                .confettiCannon(trigger: $trigger, num: 50, openingAngle: Angle(degrees: 0), closingAngle: Angle(degrees: 360), radius: 200)
+
+        }
     }
     
     private func checkForNewDay() {
@@ -83,12 +110,15 @@ struct FoodView: View {
         print("reset!")
         viewModel.resetGoalCount()
         viewModel.resetCharacters()
+        goodJobIsShown = false
+        if onboardingTomorrow {
+            finishedOnboarding = false
+        }
 //        currentDay += 1 // MARK: what is this var even for lmao
         lastDate = Date().timeIntervalSince1970
     }
     
     var header: some View {
-        // MARK: FIX THIS LMAO
         let habit = viewModel.user.currentHabit
         return VStack(spacing: 14) {
                 Text("\(habit.completedDays)/\(habit.totalDays) completed")
@@ -135,7 +165,8 @@ struct FoodView: View {
 //        return ProgressView(value: 0.5, total: 1.0)
             .frame(maxWidth: 60)
             .scaleEffect(2)
-            .tint(.orange)
+            .tint(goodJobIsShown ? .blue : .orange)
+            .animation(goodJobIsShown ? .spring : nil, value: goodJobIsShown)
 //            .onTapGesture {
 //                progress += 0.1
 //            }

@@ -26,10 +26,12 @@ struct OnboardingView: View {
             } else if onboardingStep == 3 {
                 pickHabit
             } else if onboardingStep == 4 {
-                pickFrequency
+                aboutHabit
             } else if onboardingStep == 5 {
-                pickWhy
+                pickFrequency
             } else if onboardingStep == 6 {
+                pickWhy
+            } else if onboardingStep == 7 {
                 end
             }
 //            else if onboardingStep == 7 {
@@ -97,10 +99,29 @@ struct OnboardingView: View {
             }
     }
     
+    var aboutHabit: some View {
+        VStack {
+            Spacer()
+            Text("Science shows that simple habits can be formed in as little as 18 days. You got this!")
+                .font(.subtitle)
+                .multilineTextAlignment(.center)
+                .padding(.vertical)
+                .padding(.horizontal, 60)
+
+            Spacer()
+            nextButton(text: "Cool")
+                .padding(.bottom, 40)
+        }.frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background {
+                Color.yellow
+                    .ignoresSafeArea()
+            }
+    }
+    
     var end: some View {
         VStack {
             Spacer()
-            Text("Great! You’re on your way to building a habit that’ll help you feel good and live well. \n \n On the next screen, tap on a food if you eat it in real life! It’s that simple.")
+            Text("You’re about to build a habit that will help you feel good and live well! \n On the next screen, just tap on a food whenever you eat it in real life. It’s that simple!")
                 .font(.subtitle)
                 .multilineTextAlignment(.center)
                 .padding(.vertical)
@@ -112,7 +133,7 @@ struct OnboardingView: View {
                 print(finishedOnboarding)
                 print ("\(viewModel.user.currentHabit.name), \(viewModel.user.currentHabit.totalGoalCount), \(viewModel.user.currentHabit.why)")
             } label: {
-                Text("Ok!")
+                Text("Let's go!")
                     .font(.button)
                     .foregroundColor(.white)
                     .frame(maxWidth: 180)
@@ -212,7 +233,7 @@ struct OnboardingView: View {
     
     var pickFrequency: some View {
         VStack {
-            Text("How many times per day?")
+            Text("How many times per day do you want to do this habit?")
                 .font(.title2)
                 .multilineTextAlignment(.center)
                 .padding(.vertical)
@@ -271,13 +292,13 @@ struct OnboardingView: View {
     var pickWhy: some View {
         VStack(alignment: .center, spacing: 24) {
             VStack(alignment: .center, spacing: 16) {
-                Text("Last Thing!")
+                Text("Why do you want to form this habit?")
                     .font(.title2)
                     .multilineTextAlignment(.center)
                     .padding(.vertical)
                     .padding(.horizontal, 40)
                 
-                Text("Why do you want to form this habit?")
+                Text("We'll remind you about this to keep you motivated!")
                     .font(.body)
                     .multilineTextAlignment(.center)
             }

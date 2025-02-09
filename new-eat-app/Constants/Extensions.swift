@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-extension Color {
+public extension Color {
     static let blue = Color(red: 0.06, green: 0.44, blue: 0.99)
     static let lightYellow = Color(red: 1, green: 0.86, blue: 0.27)
     static let whiteYellow = Color(red: 1, green: 0.93, blue: 0.64)
@@ -15,8 +15,9 @@ extension Color {
     static let orange = Color(red: 1, green: 0.45, blue: 0)
 }
 
-extension Font {
+public extension Font {
     // MARK: change back title font after proper concatenation
+    static let megaTitle = Font.custom("Figtree", size: 80).weight(.semibold)
     static let title = Font.custom("Figtree", size: 30).weight(.semibold)
     static let title2 = Font.custom("Figtree", size: 24).weight(.semibold)
     static let title3 = Font.custom("Figtree", size: 16).weight(.semibold)

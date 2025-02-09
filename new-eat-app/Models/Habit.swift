@@ -15,11 +15,7 @@ class Habit: Identifiable {
     var totalGoalCount: Int
     var completedGoalCount: Int = 0
     var totalDays: Int
-    var completedDays: Int {
-        didSet {
-                    print("completedDays was set to \(completedDays)")
-                }
-    }
+    var completedDays: Int
     var why: String
     @Relationship(deleteRule: .nullify) var pinnedEntry: Entry?
     
@@ -28,7 +24,7 @@ class Habit: Identifiable {
         name: String,
         totalGoalCount: Int = 0,
         completedGoalCount: Int = 0,
-        totalDays: Int = 21,
+        totalDays: Int = 18,
         completedDays: Int = 0,
         why: String = "",
         pinnedEntry: Entry? = nil
