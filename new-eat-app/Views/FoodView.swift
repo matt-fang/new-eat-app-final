@@ -23,20 +23,40 @@ struct FoodView: View {
     var pinnedEntry: Entry = Entry(type: "reminder", title: "Pin a reminder in your journal!", body: "placeholder body")
     
     var body: some View {
-//        @State var viewModel.user.currentHabit = viewModel.user.currentHabit
         TabView {
-            VStack {
-                header
-                pinnedEntryNotification
-                Spacer()
-                manyCharacters
-                Button {
-                    lastDate = Date.now.addingTimeInterval(87000).timeIntervalSince1970
-                    print("\(lastDate)")
-                } label: {
-                    Text("jump to tomorrow!")
-                }
-            }.frame(maxWidth: .infinity, maxHeight: .infinity)
+                VStack(spacing: 0) { // Added spacing: 0 to have more control
+                        VStack(spacing: 4) { // Added consistent spacing
+                            header
+                                .layoutPriority(2)
+                            
+                            pinnedEntryNotification
+                                .layoutPriority(2)
+                                .overlay {
+                                    Text("Great \n job!")
+                                        .font(.megaTitle)
+                                        .foregroundStyle(.blue)
+                                        .multilineTextAlignment(.center)
+                                        .lineSpacing(-10)
+                                        .opacity(goodJobIsShown ? 1 : 0)
+                                        .scaleEffect(goodJobIsShown ? 1.5 : 1)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                        .animation(goodJobIsShown ? .spring : nil, value: goodJobIsShown)
+                                        .confettiCannon(trigger: $trigger, num: 50, openingAngle: Angle(degrees: 0), closingAngle: Angle(degrees: 360), radius: 200)
+                                        .offset(y: 200)
+                                }
+                            Spacer()
+                            manyCharacters
+//                                .overlay {
+//                                    Button {
+//                                        lastDate = Date.now.addingTimeInterval(87000).timeIntervalSince1970
+//                                        print("\(lastDate)")
+//                                    } label: {
+//                                        Text("jump to tomorrow!")
+//                                    }
+//                                    .padding(.bottom)
+//                                }
+                    }
+                }.frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background {
                     Color.yellow
                         .ignoresSafeArea()
@@ -68,33 +88,26 @@ struct FoodView: View {
     }
     
     var manyCharacters: some View {
-        ZStack (alignment: .top) {
-            LazyVGrid(columns: [GridItem(), GridItem()]) {
-                ForEach($viewModel.user.currentCharacters, id: \.self) { $character in
-                    CharacterView(lastDate: $lastDate, character: $character, viewModel: viewModel)
-                        .onChange(of: character.isShown) { _, newValue in
-                            if !newValue && viewModel.user.currentCharacters.allSatisfy({ !$0.isShown }) {
-                                trigger += 1
-                                goodJobIsShown.toggle()
+        GeometryReader { geometry in
+            let isSmallDevice = geometry.size.width < 400 // iPhone SE height
+            
+            ZStack(alignment: .top) {
+                LazyVGrid(columns: [GridItem(), GridItem()]) {
+                    ForEach($viewModel.user.currentCharacters, id: \.self) { $character in
+                        CharacterView(lastDate: $lastDate, character: $character, viewModel: viewModel)
+                            .onChange(of: character.isShown) { _, newValue in
+                                if !newValue && viewModel.user.currentCharacters.allSatisfy({ !$0.isShown }) {
+                                    trigger += 1
+                                    goodJobIsShown.toggle()
+                                }
+                                if viewModel.user.currentHabit.totalDays == viewModel.user.currentHabit.completedDays {
+                                    onboardingTomorrow = true
+                                }
                             }
-                            if viewModel.user.currentHabit.totalDays == viewModel.user.currentHabit.completedDays {
-                                onboardingTomorrow = true
-                            }
-                        }
-                        
+                    }
                 }
-            }.padding(.bottom, 10)
-            Text("Great \n job!")
-                .font(.megaTitle)
-                .foregroundStyle(.blue)
-                .multilineTextAlignment(.center)
-                .lineSpacing(-10) // MARK: doesn't work lol
-                .opacity(goodJobIsShown ? 1 : 0)
-                .scaleEffect(goodJobIsShown ? 1.5 : 1) // Scale up the text
-                .padding()
-                .animation(goodJobIsShown ? .spring : nil, value: goodJobIsShown) // Animate opacity and scale
-                .confettiCannon(trigger: $trigger, num: 50, openingAngle: Angle(degrees: 0), closingAngle: Angle(degrees: 360), radius: 200)
-
+//                .scaleEffect(isSmallDevice ? 0.9 : 1)
+            }
         }
     }
     
@@ -121,8 +134,9 @@ struct FoodView: View {
     var header: some View {
         let habit = viewModel.user.currentHabit
         return VStack(spacing: 14) {
-                Text("\(habit.completedDays)/\(habit.totalDays) completed")
+                Text("\(habit.completedDays)/\(habit.totalDays) days completed")
                     .font(Font.title3)
+                    .fixedSize(horizontal: false, vertical: true)
                 VStack(spacing: 8) {
                     Text("\(habit.name), \(habit.totalGoalCount)x")
                         .font(.title)
@@ -152,7 +166,7 @@ struct FoodView: View {
                 .padding(.vertical, 10)
 
         }.padding()
-            .frame(maxHeight: 130)
+            .frame(height: 130)
     }
     
     var progressBar: some View {

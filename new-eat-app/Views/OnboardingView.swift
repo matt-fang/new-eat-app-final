@@ -107,9 +107,23 @@ struct OnboardingView: View {
                 .multilineTextAlignment(.center)
                 .padding(.vertical)
                 .padding(.horizontal, 60)
+            Button {
+                print ("source!")
+            } label: {
+                Link(destination: URL(string:"https://www.scientificamerican.com/article/how-long-does-it-really-take-to-form-a-habit/")!) {
+                    Label("SOURCE", systemImage: "arrow.up.right")
+                        .labelStyle(.titleAndIcon)
+                        .foregroundStyle(.black)
+                        .font(.caption)
+                }
+
+            }.buttonStyle(.borderedProminent)
+                .tint(.whiteYellow)
+            
+           
 
             Spacer()
-            nextButton(text: "Cool")
+            nextButton(text: "Cool!")
                 .padding(.bottom, 40)
         }.frame(maxWidth: .infinity, maxHeight: .infinity)
             .background {
@@ -121,7 +135,7 @@ struct OnboardingView: View {
     var end: some View {
         VStack {
             Spacer()
-            Text("You’re about to build a habit that will help you feel good and live well! \n On the next screen, just tap on a food whenever you eat it in real life. It’s that simple!")
+            Text("You’re about to build a habit that will help you feel good and live well! \n \n On the next screen, just tap on a food whenever you eat it in real life. It’s that simple.")
                 .font(.subtitle)
                 .multilineTextAlignment(.center)
                 .padding(.vertical)
@@ -249,7 +263,7 @@ struct OnboardingView: View {
             // MARK: what is happening here lol — understand
             VStack {
                 Text("\(totalGoalCount ?? 3)")
-                    .font(.title)
+                    .font(.megaTitle)
                     .padding()
                 Stepper("\(totalGoalCount ?? 3)", value: Binding(
                     get: { totalGoalCount ?? 1 },
