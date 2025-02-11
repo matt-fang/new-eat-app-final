@@ -13,10 +13,13 @@ public extension Color {
     static let whiteYellow = Color(red: 1, green: 0.93, blue: 0.64)
     static let yellow = Color(red: 1, green: 0.81, blue: 0.01)
     static let orange = Color(red: 1, green: 0.45, blue: 0)
+    static let lightOrange = Color(red: 1, green: 0.53, blue: 0.15)
+    static let lighterOrange = Color(red: 1, green: 0.61, blue: 0.29)
 }
 
 public extension Font {
     // MARK: change back title font after proper concatenation
+    static let hero = Font.custom("Figtree", size: 350).weight(.semibold)
     static let megaTitle = Font.custom("Figtree", size: 80).weight(.semibold)
     static let title = Font.custom("Figtree", size: 30).weight(.semibold)
     static let title2 = Font.custom("Figtree", size: 24).weight(.semibold)
