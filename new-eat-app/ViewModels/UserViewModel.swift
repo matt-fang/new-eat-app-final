@@ -62,6 +62,10 @@ import SwiftUI
         }
     }
     
+    func recordReflectionRating(positive: Bool) {
+        print("\(positive)")
+    }
+    
 
     
 //    func checkToIncrementGoalCount() {

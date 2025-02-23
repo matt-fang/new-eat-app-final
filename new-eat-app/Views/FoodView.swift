@@ -5,105 +5,297 @@
 //  Created by Matthew Fang on 2/4/25.
 //
 
-import SwiftData
 import SwiftUI
+
+struct StandardButton: View {
+    let text: String
+    let action: () -> Void
+    let color: Color
+    
+    var body: some View {
+        Button(action: action) {
+            Text(text)
+                .font(.button)
+                .foregroundColor(.white)
+                .frame(maxWidth: 180)
+                .padding(.vertical, 16)
+                .background(color)
+                .clipShape(RoundedRectangle(cornerRadius: 32))
+        }
+    }
+}
 
 struct FoodView: View {
     @State private var trigger: Int = 0
-    @State private var goodJobIsShown: Bool = false
     @State private var showingResetAlert: Bool = false
     @Environment(\.scenePhase) private var scenePhase
     @Bindable var viewModel: UserViewModel
     @AppStorage("finishedOnboarding") private var finishedOnboarding: Bool = true
     @State var onboardingTomorrow: Bool = false
-   
+    
     @AppStorage("currentDay") var currentDay: Int = 1
     @AppStorage("lastDate") var lastDate: Double = 0
     
-    var pinnedEntry: Entry = .init(type: "reminder", title: "Pin a reminder in your journal!", body: "placeholder body")
+    // New animation states
+    @State private var completionState: CompletionState = .normal
+    @State private var showingDaysCompleted = false
+    @State private var showingQuote = false
+    @State private var animatingNumber = false
+    @State private var newNumber = false
+    @State private var showingReflection = false
+    @State private var isQuoteVisible = true
+    
+    enum CompletionState {
+        case normal
+        case celebration
+        case completed
+    }
     
     var body: some View {
         TabView {
-            VStack(spacing: 0) {
-                VStack(spacing: 4) {
-                    header
-                        .layoutPriority(2)
-                                
-                    pinnedEntryNotification
-                        .layoutPriority(2)
-                        .overlay {
-                            Text("Great \n job!")
-                                .font(.megaTitle)
-                                .foregroundStyle(.blue)
-                                .multilineTextAlignment(.center)
-                                .lineSpacing(-10)
-                                .opacity(goodJobIsShown ? 1 : 0)
-                                .scaleEffect(goodJobIsShown ? 1.5 : 1)
-                                .fixedSize(horizontal: false, vertical: true)
-                                .animation(goodJobIsShown ? .spring : nil, value: goodJobIsShown)
-                                .confettiCannon(trigger: $trigger, num: 50, openingAngle: Angle(degrees: 0), closingAngle: Angle(degrees: 360), radius: 200)
-                                .offset(y: 200)
-                        }
-                    Spacer()
-                    manyCharacters
-                }
-            }.frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background {
-                    Color.yellow
-                        .ignoresSafeArea()
-                }
+            mainContent
                 .tabItem {
                     Image(systemName: "fork.knife")
                     Text("Food")
                 }
                 .tag(0)
-            VStack {
-                Text("Your Journal")
-                    .font(.title)
-                    .padding()
-                Text("Coming soon!")
-                    .font(.body)
-                    .padding()
-            }
-            .tabItem {
-                Image(systemName: "book.closed.fill")
-                Text("Journal")
-            }
-            .tag(1)
-        }.tint(.black)
-            .onChange(of: scenePhase) { newPhase in
-                if newPhase == .active {
-                    checkForNewDay()
-                }
-            }
-    }
-    
-    var manyCharacters: some View {
-        GeometryReader { geometry in
-            let isSmallDevice = geometry.size.width < 400 // iPhone SE height
             
-            ZStack(alignment: .top) {
-                LazyVGrid(columns: [GridItem(), GridItem()]) {
-                    ForEach($viewModel.user.currentCharacters, id: \.self) { $character in
-                        CharacterView(lastDate: $lastDate, character: $character, viewModel: viewModel)
-                            .onChange(of: character.isShown) { _, newValue in
-                                if !newValue && viewModel.user.currentCharacters.allSatisfy({ !$0.isShown }) {
-                                    trigger += 1
-                                    goodJobIsShown.toggle()
-                                }
-                                if viewModel.user.currentHabit.totalDays == viewModel.user.currentHabit.completedDays {
-                                    onboardingTomorrow = true
-                                }
-                            }
-                    }
+            journalTab
+                .tabItem {
+                    Image(systemName: "book.closed.fill")
+                    Text("Journal")
                 }
-//                .scaleEffect(isSmallDevice ? 0.9 : 1)
+                .tag(1)
+        }
+        .tint(.black)
+        .onChange(of: scenePhase) { newPhase in
+            if newPhase == .active {
+                checkForNewDay()
             }
         }
     }
     
+    var mainContent: some View {
+        ZStack {
+            backgroundColor
+            
+            VStack(spacing: 0) {
+                if completionState == .normal {
+                    normalContent
+                } else if completionState == .celebration {
+                    celebrationContent
+                } else {
+                    completedContent
+                }
+            }
+        }
+        .animation(.easeInOut(duration: 0.5), value: completionState)
+    }
+    
+    var journalTab: some View {
+        VStack {
+            Text("Your Journal")
+                .font(.title2)
+            Text("Coming soon!")
+                .font(.body)
+        }
+    }
+    
+    var backgroundColor: some View {
+        Group {
+            switch completionState {
+            case .normal:
+                Color.yellow
+            case .celebration:
+                Color.orange
+            case .completed:
+                Color.yellow
+            }
+        }
+        .ignoresSafeArea()
+    }
+    
+    var normalContent: some View {
+        VStack(spacing: 4) {
+            header
+                .layoutPriority(2)
+            
+            pinnedEntryNotification
+                .layoutPriority(2)
+            
+            Spacer()
+            
+            manyCharacters
+                .padding(.bottom)
+        }
+    }
+    
+    var celebrationContent: some View {
+        VStack {
+            header
+            Spacer()
+            
+            if !showingDaysCompleted {
+                Text("Great\njob!")
+                    .font(.megaTitle)
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+                    .transition(.move(edge: .leading).combined(with: .opacity))
+            } else {
+                VStack(spacing: 20) {
+                    if showingQuote {
+                        Text("\"Every great thing\nwas formed one step\nat a time.\"")
+                            .font(.title2)
+                            .foregroundColor(.yellow)
+                            .multilineTextAlignment(.center)
+                            .transition(.move(edge: .trailing).combined(with: .opacity))
+                    } else {
+                        Text("\(viewModel.user.currentHabit.completedDays)")
+                            .font(.hero)
+                            .tracking(-10)
+                            .foregroundColor(newNumber ? .yellow : .white)
+                            .contentTransition(.numericText(value: Double(viewModel.user.currentHabit.completedDays)))
+                            .transition(.move(edge: .trailing).combined(with: .opacity))
+                            .onChange(of: viewModel.user.currentHabit.completedDays) { _ in
+                                withAnimation(.easeInOut(duration: 0.5)) { // Smooth transition
+                                    newNumber = true
+                                }
+                            }
+                        
+                        Text("days completed")
+                            .font(.title2)
+                            .foregroundColor(.white)
+                    }
+                }
+            }
+            
+            Spacer()
+            
+            StandardButton(
+                text: "Done",
+                action: { withAnimation { completionState = .completed } },
+                color: .lightOrange
+            )
+            .padding(.bottom, 40)
+        }
+        .onAppear {
+            // Animation sequence
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                withAnimation {
+                    showingDaysCompleted = true
+                }
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                    withAnimation {
+                        animatingNumber = true
+                    }
+                    
+                    // Increment day count a few seconds after the number appears
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                        withAnimation {
+                            viewModel.incrementDayCount() // Now happens after number animation
+                        }
+                        
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                            withAnimation {
+                                showingQuote = true
+                            }
+                            
+                            // Start quote/number cycling
+                            Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+                                withAnimation {
+                                    isQuoteVisible.toggle()
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    var completedContent: some View {
+        VStack(spacing: 4) {
+            header
+                .layoutPriority(2)
+            
+            reflectionPrompt
+                .layoutPriority(2)
+            
+            Text("All done\ntoday!")
+                .font(.megaTitle)
+                .foregroundColor(.white)
+                .multilineTextAlignment(.center)
+            
+            Spacer()
+            
+            manyCharacters
+                .padding(.bottom)
+        }
+    }
+    
+    var reflectionPrompt: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 30)
+                .foregroundStyle(Color.lightOrange)
+            
+            VStack(spacing: 10) {
+                Text("REFLECT")
+                    .font(.caption)
+                    .foregroundColor(.white)
+                
+                Text("How do you feel after\nfinishing your habit?")
+                    .font(.body)
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+                
+                HStack(spacing: 20) {
+                    Button(action: { viewModel.recordReflectionRating(positive: true) }) {
+                        Image(systemName: "hand.thumbsup.fill")
+                            .font(.title)
+                            .foregroundColor(.white)
+                    }
+                    .background(Circle().fill(Color.lighterOrange).frame(width: 60, height: 60))
+                    
+                    Button(action: { viewModel.recordReflectionRating(positive: false) }) {
+                        Image(systemName: "hand.thumbsdown.fill")
+                            .font(.title)
+                            .foregroundColor(.white)
+                    }
+                    .background(Circle().fill(Color.lighterOrange).frame(width: 60, height: 60))
+                }
+            }
+            .padding()
+        }
+        .padding()
+        .frame(height: 200)
+    }
+    
+    // Your existing views...
+    var manyCharacters: some View {
+        ZStack(alignment: .top) {
+            LazyVGrid(columns: [GridItem(), GridItem()]) {
+                ForEach($viewModel.user.currentCharacters, id: \.self) { $character in
+                    CharacterView(lastDate: $lastDate, character: $character, viewModel: viewModel)
+                        .confettiCannon(trigger: $trigger)
+                        .onChange(of: character.isShown) { _, newValue in
+                            if !newValue && viewModel.user.currentCharacters.allSatisfy({ !$0.isShown }) {
+                                trigger += 1
+                                withAnimation {
+                                    completionState = .celebration
+                                }
+                            }
+                            if viewModel.user.currentHabit.totalDays == viewModel.user.currentHabit.completedDays {
+                                onboardingTomorrow = true
+                            }
+                        }
+                }
+            }
+        }
+    }
+    
+    // Rest of your existing code...
     private func checkForNewDay() {
-        print("checked!")
         let savedDate = Date(timeIntervalSince1970: lastDate)
         if !Calendar.current.isDateInToday(savedDate) {
             resetForNewDay()
@@ -111,16 +303,20 @@ struct FoodView: View {
     }
 
     private func resetForNewDay() {
-        print("reset!")
         viewModel.resetGoalCount()
         viewModel.resetCharacters()
-        goodJobIsShown = false
+        completionState = .normal
+        showingDaysCompleted = false
+        showingQuote = false
+        animatingNumber = false
+        showingReflection = false
         if onboardingTomorrow {
             finishedOnboarding = false
         }
-//        currentDay += 1 // MARK: what is this var even for lmao
         lastDate = Date().timeIntervalSince1970
     }
+    
+    // ... rest of your existing view code
     
     var header: some View {
         let habit = viewModel.user.currentHabit
@@ -193,8 +389,7 @@ struct FoodView: View {
 //        return ProgressView(value: 0.5, total: 1.0)
             .frame(maxWidth: 60)
             .scaleEffect(2)
-            .tint(goodJobIsShown ? .blue : .orange)
-            .animation(goodJobIsShown ? .spring : nil, value: goodJobIsShown)
+            .tint(.orange)
 //            .onTapGesture {
 //                progress += 0.1
 //            }

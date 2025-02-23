@@ -24,7 +24,7 @@ struct CharacterView: View {
             .onTapGesture {
                 if character.isShown {
                     viewModel.incrementGoalCount()
-                    viewModel.incrementDayCount() // checks if day should be incremented + increments
+//                    viewModel.incrementDayCount() // checks if day should be incremented + increments
                     viewModel.hideCharacter(character)
                     print("FROM THE VIEWMODEL: \(viewModel.user.currentCharacters.map { $0.isShown })")
                     print ("FROM THE VIEW: \(character) got reset to \(character.isShown)!")

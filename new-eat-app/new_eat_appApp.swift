@@ -15,11 +15,14 @@ struct new_eat_appApp: App {
     
     var body: some Scene {
         WindowGroup {
-            if finishedOnboarding == false {
-                OnboardingView(viewModel: viewModel)
-            } else {
-                FoodView(viewModel: viewModel)
+            ZStack {
+                if finishedOnboarding == false {
+                    OnboardingView(viewModel: viewModel)
+                } else {
+                    FoodView(viewModel: viewModel)
+                }
             }
+
         }
     }
 }
